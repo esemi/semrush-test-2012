@@ -5,7 +5,8 @@ import sys
 
 import MySQLdb as mdb
 
-class DB():
+
+class DB:
     HOST = 'localhost'
     LOGIN = 'semrush'
     PASS = 'qwerty'
@@ -13,34 +14,30 @@ class DB():
 
     _conn = None
 
-    def __init__(self):        
+    def __init__(self):
         self.connect()
 
     def conn(self):
         return self._conn
 
-
     def connect(self):
         try:
             self._conn = mdb.connect(self.HOST, self.LOGIN, self.PASS, self.DBNAME, charset="utf8", use_unicode=True)
-        except mdb.Error, e:
+        except mdb.Error as e:
             logging.error("Error %d: %s" % (e.args[0], e.args[1]))
             sys.exit()
         logging.debug("Соединение mysql открыто")
-
 
     def close(self):
         if self.conn():
             self.conn().close()
             logging.debug("Соединение mysql закрыто")
 
-
     def addUrls(self, urls):
         cursor = self.conn().cursor()
         for url in urls:
-            cursor.execute("INSERT IGNORE INTO `domains` (`url`) VALUES (%s)", (url))
+            cursor.execute("INSERT IGNORE INTO `domains` (`url`) VALUES (%s)", url)
         self.conn().commit()
-
 
     def getAllDomains(self):
         cursor = self.conn().cursor(mdb.cursors.DictCursor)
@@ -49,7 +46,6 @@ class DB():
         cursor.close()
         return rows
 
-
     def getAllLinks(self):
         cursor = self.conn().cursor(mdb.cursors.DictCursor)
         cursor.execute("SELECT id as id_link, link AS url,'test_cookie=CheckForPermission' AS cookie FROM `adsense_links`")
@@ -57,19 +53,16 @@ class DB():
         cursor.close()
         return rows
 
-
     def clearProps(self, domain_id):
         cursor = self.conn().cursor()
         cursor.execute("DELETE FROM `adsense_links` WHERE `domain_id` = %s", domain_id )
         self.conn().commit()
-
 
     def addProps(self, domain_id, links):
         cursor = self.conn().cursor()
         for link in links:
             cursor.execute("INSERT INTO `adsense_links` (`domain_id`, `link`) VALUES (%s, %s)", (domain_id, link))
         self.conn().commit()
-
 
     def addAdsense(self, buffer_data):
         cursor = self.conn().cursor()
@@ -78,14 +71,12 @@ class DB():
                             (item['title'], item['desc'], item['url']))
         self.conn().commit()
 
-
     def getLinksForUpdate(self, count):
         cursor = self.conn().cursor(mdb.cursors.DictCursor)
         cursor.execute("""SELECT adsense_links.`id` as id_link , url as domain, `domain_id` as id_domain , `link` as url, `last_cookie` as `cookie` FROM `adsense_links` LEFT JOIN domains ON ( domain_id = domains.id ) WHERE last_cookie IS NOT NULL ORDER BY date_load LIMIT %s""", count)
         rows = cursor.fetchall()
         cursor.close()
         return rows
-
 
     def delLink(self, link_id):
         cursor = self.conn().cursor()
